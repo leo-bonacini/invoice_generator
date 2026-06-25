@@ -1,0 +1,600 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Invoice Generator</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    background: #f0f2f5;
+    color: #1a1a2e;
+  }
+
+  /* ── Toolbar ── */
+  .toolbar {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: #1a1a2e;
+    color: #fff;
+    padding: 12px 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    box-shadow: 0 2px 8px rgba(0,0,0,.25);
+  }
+  .toolbar h1 { font-size: 1.1rem; font-weight: 600; letter-spacing: .5px; }
+  .toolbar-actions { display: flex; gap: 10px; }
+  .btn {
+    padding: 7px 18px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: .85rem;
+    font-weight: 600;
+    transition: opacity .15s;
+  }
+  .btn:hover { opacity: .85; }
+  .btn-outline {
+    background: transparent;
+    border: 1.5px solid rgba(255,255,255,.5);
+    color: #fff;
+  }
+  .btn-primary { background: #4f8ef7; color: #fff; }
+  .btn-danger  { background: #e05c5c; color: #fff; }
+
+  /* ── Page wrapper ── */
+  .page-wrap {
+    max-width: 900px;
+    margin: 36px auto 60px;
+    padding: 0 20px;
+  }
+
+  /* ── Invoice card ── */
+  .invoice {
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 4px 24px rgba(0,0,0,.08);
+    padding: 52px 60px;
+  }
+
+  /* ── Editable fields ── */
+  [contenteditable] {
+    outline: none;
+    border-radius: 4px;
+    transition: background .15s, box-shadow .15s;
+  }
+  [contenteditable]:hover  { background: #f0f5ff; }
+  [contenteditable]:focus  { background: #e8f0fe; box-shadow: 0 0 0 2px #4f8ef755; }
+
+  /* ── Header ── */
+  .invoice-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 40px;
+  }
+  .brand-block {}
+  .company-name {
+    font-size: 1.7rem;
+    font-weight: 700;
+    color: #1a1a2e;
+    display: block;
+    min-width: 180px;
+  }
+  .company-address {
+    margin-top: 6px;
+    font-size: .88rem;
+    color: #555;
+    line-height: 1.6;
+    min-width: 160px;
+    display: block;
+  }
+  .invoice-label-block { text-align: right; }
+  .invoice-title {
+    font-size: 2rem;
+    font-weight: 800;
+    color: #4f8ef7;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+  .invoice-meta {
+    margin-top: 10px;
+    font-size: .85rem;
+    color: #555;
+    line-height: 1.9;
+  }
+  .invoice-meta span { font-weight: 600; color: #1a1a2e; }
+  .meta-value {
+    display: inline-block;
+    min-width: 110px;
+    text-align: left;
+  }
+
+  /* ── Divider ── */
+  .divider {
+    border: none;
+    border-top: 2px solid #e8edf5;
+    margin: 28px 0;
+  }
+
+  /* ── Bill to / from ── */
+  .parties {
+    display: flex;
+    gap: 48px;
+    margin-bottom: 36px;
+  }
+  .party { flex: 1; }
+  .party-label {
+    font-size: .7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1.2px;
+    color: #4f8ef7;
+    margin-bottom: 8px;
+  }
+  .party-name {
+    font-size: 1rem;
+    font-weight: 700;
+    display: block;
+    min-width: 140px;
+  }
+  .party-details {
+    margin-top: 4px;
+    font-size: .85rem;
+    color: #555;
+    line-height: 1.7;
+    display: block;
+    min-width: 140px;
+  }
+
+  /* ── Line items table ── */
+  .items-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 24px;
+  }
+  .items-table thead th {
+    background: #1a1a2e;
+    color: #fff;
+    padding: 11px 14px;
+    font-size: .78rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .8px;
+    text-align: left;
+  }
+  .items-table thead th:last-child,
+  .items-table thead th:nth-child(2),
+  .items-table thead th:nth-child(3) { text-align: right; }
+  .items-table thead th:first-child { border-radius: 6px 0 0 6px; }
+  .items-table thead th:last-child  { border-radius: 0 6px 6px 0; }
+
+  .items-table tbody tr { border-bottom: 1px solid #f0f2f5; }
+  .items-table tbody tr:hover { background: #fafbff; }
+  .items-table td {
+    padding: 11px 14px;
+    font-size: .9rem;
+    vertical-align: middle;
+  }
+  .items-table td:nth-child(2),
+  .items-table td:nth-child(3),
+  .items-table td:nth-child(4) { text-align: right; }
+  .items-table td:nth-child(4) { font-weight: 600; color: #1a1a2e; }
+
+  .td-editable { min-width: 40px; }
+  .col-desc { min-width: 200px; }
+
+  /* row actions */
+  .row-actions {
+    display: none;
+    gap: 6px;
+  }
+  .items-table tbody tr:hover .row-actions { display: flex; justify-content: flex-end; }
+  .row-delete {
+    background: none;
+    border: none;
+    color: #e05c5c;
+    cursor: pointer;
+    font-size: .8rem;
+    padding: 2px 6px;
+    border-radius: 4px;
+  }
+  .row-delete:hover { background: #fdeaea; }
+
+  /* add row */
+  .add-row-btn {
+    background: none;
+    border: 1.5px dashed #bbc5d8;
+    border-radius: 6px;
+    color: #4f8ef7;
+    font-size: .82rem;
+    font-weight: 600;
+    padding: 8px 14px;
+    cursor: pointer;
+    margin-bottom: 28px;
+    transition: border-color .15s, background .15s;
+  }
+  .add-row-btn:hover { border-color: #4f8ef7; background: #f0f5ff; }
+
+  /* ── Totals ── */
+  .totals-wrap {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 36px;
+  }
+  .totals-box {
+    min-width: 280px;
+    background: #f7f9fc;
+    border-radius: 8px;
+    padding: 18px 22px;
+  }
+  .totals-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: .88rem;
+    color: #555;
+    margin-bottom: 8px;
+  }
+  .totals-row.tax-row { align-items: center; }
+  .totals-row span:first-child { font-weight: 500; }
+  .totals-row .amount { font-weight: 600; color: #1a1a2e; }
+  .totals-row.grand {
+    border-top: 2px solid #1a1a2e;
+    margin-top: 10px;
+    padding-top: 10px;
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: #1a1a2e;
+  }
+  .totals-row.grand .amount { color: #4f8ef7; font-size: 1.1rem; }
+
+  /* tax input */
+  .tax-input {
+    width: 54px;
+    border: 1px solid #ccd4e0;
+    border-radius: 4px;
+    padding: 3px 5px;
+    font-size: .85rem;
+    text-align: right;
+    outline: none;
+    color: #1a1a2e;
+  }
+  .tax-input:focus { border-color: #4f8ef7; }
+
+  /* ── Notes ── */
+  .notes-section { margin-bottom: 32px; }
+  .section-label {
+    font-size: .7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1.2px;
+    color: #4f8ef7;
+    margin-bottom: 8px;
+  }
+  .notes-text {
+    font-size: .85rem;
+    color: #555;
+    line-height: 1.7;
+    min-height: 38px;
+    display: block;
+    min-width: 200px;
+  }
+
+  /* ── Bank details ── */
+  .bank-section {
+    background: #f7f9fc;
+    border-left: 4px solid #4f8ef7;
+    border-radius: 0 8px 8px 0;
+    padding: 18px 22px;
+    margin-bottom: 32px;
+  }
+  .bank-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px 28px;
+    margin-top: 10px;
+  }
+  .bank-field { display: flex; flex-direction: column; gap: 2px; }
+  .bank-field-label {
+    font-size: .7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .8px;
+    color: #888;
+  }
+  .bank-field-value {
+    font-size: .88rem;
+    color: #1a1a2e;
+    font-weight: 500;
+    min-width: 100px;
+    display: block;
+  }
+
+  /* ── Footer ── */
+  .invoice-footer {
+    text-align: center;
+    font-size: .78rem;
+    color: #aaa;
+    margin-top: 20px;
+  }
+  .footer-text { display: block; min-width: 100px; }
+
+  /* ── Currency selector ── */
+  .currency-select {
+    border: 1px solid #ccd4e0;
+    border-radius: 4px;
+    padding: 4px 8px;
+    font-size: .85rem;
+    color: #1a1a2e;
+    background: #fff;
+    outline: none;
+    cursor: pointer;
+  }
+  .currency-select:focus { border-color: #4f8ef7; }
+
+  /* ── Print styles ── */
+  @media print {
+    body { background: #fff; }
+    .toolbar, .add-row-btn, .row-actions, .btn { display: none !important; }
+    .page-wrap { margin: 0; padding: 0; max-width: 100%; }
+    .invoice { box-shadow: none; border-radius: 0; padding: 32px 48px; }
+    [contenteditable]:hover, [contenteditable]:focus {
+      background: transparent !important;
+      box-shadow: none !important;
+    }
+    .items-table thead th:first-child { border-radius: 0; }
+    .items-table thead th:last-child  { border-radius: 0; }
+    .currency-select, .tax-input { border: none; background: transparent; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ── Toolbar ── -->
+<div class="toolbar">
+  <h1>Invoice Generator</h1>
+  <div class="toolbar-actions">
+    <select class="currency-select" id="currencySelect" onchange="updateCurrency()">
+      <option value="$">$ USD</option>
+      <option value="€">€ EUR</option>
+      <option value="£">£ GBP</option>
+      <option value="¥">¥ JPY</option>
+      <option value="R$">R$ BRL</option>
+      <option value="CHF">CHF</option>
+      <option value="CA$">CA$ CAD</option>
+      <option value="A$">A$ AUD</option>
+    </select>
+    <button class="btn btn-outline" onclick="clearInvoice()">New Invoice</button>
+    <button class="btn btn-primary" onclick="window.print()">Print / Save PDF</button>
+  </div>
+</div>
+
+<!-- ── Invoice ── -->
+<div class="page-wrap">
+<div class="invoice" id="invoice">
+
+  <!-- Header -->
+  <div class="invoice-header">
+    <div class="brand-block">
+      <span class="company-name" contenteditable="true" data-placeholder="Your Company Name">Your Company Name</span>
+      <span class="company-address" contenteditable="true">123 Business Street&#10;City, State 00000&#10;yourcompany@email.com&#10;+1 (555) 000-0000</span>
+    </div>
+    <div class="invoice-label-block">
+      <div class="invoice-title">Invoice</div>
+      <div class="invoice-meta">
+        <div>Invoice # &nbsp;<span class="meta-value" contenteditable="true">INV-001</span></div>
+        <div>Date &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="meta-value" contenteditable="true" id="invoiceDate"></span></div>
+        <div>Due Date &nbsp;<span class="meta-value" contenteditable="true" id="dueDate"></span></div>
+      </div>
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <!-- Bill to / from -->
+  <div class="parties">
+    <div class="party">
+      <div class="party-label">Bill To</div>
+      <span class="party-name" contenteditable="true">Client Name</span>
+      <span class="party-details" contenteditable="true">Client Company&#10;456 Client Avenue&#10;City, State 00000&#10;client@email.com</span>
+    </div>
+    <div class="party">
+      <div class="party-label">Ship To / Project</div>
+      <span class="party-name" contenteditable="true">Project Name</span>
+      <span class="party-details" contenteditable="true">Project reference or&#10;shipping address here</span>
+    </div>
+  </div>
+
+  <!-- Line items -->
+  <table class="items-table" id="itemsTable">
+    <thead>
+      <tr>
+        <th>Description</th>
+        <th style="width:90px">Qty</th>
+        <th style="width:110px">Unit Price</th>
+        <th style="width:110px">Amount</th>
+        <th style="width:50px"></th>
+      </tr>
+    </thead>
+    <tbody id="itemsBody">
+      <!-- rows added by JS -->
+    </tbody>
+  </table>
+
+  <button class="add-row-btn" onclick="addRow()">+ Add Line Item</button>
+
+  <!-- Totals -->
+  <div class="totals-wrap">
+    <div class="totals-box">
+      <div class="totals-row">
+        <span>Subtotal</span>
+        <span class="amount" id="subtotalDisplay">$0.00</span>
+      </div>
+      <div class="totals-row tax-row">
+        <span>Tax (<input class="tax-input" id="taxRate" type="number" value="0" min="0" max="100" step="0.1" onchange="recalc()" oninput="recalc()">%)</span>
+        <span class="amount" id="taxDisplay">$0.00</span>
+      </div>
+      <div class="totals-row grand">
+        <span>Total</span>
+        <span class="amount" id="totalDisplay">$0.00</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bank Details -->
+  <div class="bank-section">
+    <div class="section-label">Bank / Payment Details</div>
+    <div class="bank-grid">
+      <div class="bank-field">
+        <span class="bank-field-label">Bank Name</span>
+        <span class="bank-field-value" contenteditable="true">First National Bank</span>
+      </div>
+      <div class="bank-field">
+        <span class="bank-field-label">Account Name</span>
+        <span class="bank-field-value" contenteditable="true">Your Company Name</span>
+      </div>
+      <div class="bank-field">
+        <span class="bank-field-label">Account Number</span>
+        <span class="bank-field-value" contenteditable="true">0000 0000 0000 0000</span>
+      </div>
+      <div class="bank-field">
+        <span class="bank-field-label">Routing / Sort Code</span>
+        <span class="bank-field-value" contenteditable="true">000000000</span>
+      </div>
+      <div class="bank-field">
+        <span class="bank-field-label">SWIFT / BIC</span>
+        <span class="bank-field-value" contenteditable="true">XXXXXXXX</span>
+      </div>
+      <div class="bank-field">
+        <span class="bank-field-label">IBAN</span>
+        <span class="bank-field-value" contenteditable="true">XX00 0000 0000 0000 0000 00</span>
+      </div>
+      <div class="bank-field">
+        <span class="bank-field-label">Payment Reference</span>
+        <span class="bank-field-value" contenteditable="true">INV-001</span>
+      </div>
+      <div class="bank-field">
+        <span class="bank-field-label">Payment Methods</span>
+        <span class="bank-field-value" contenteditable="true">Bank Transfer, PayPal</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Notes -->
+  <div class="notes-section">
+    <div class="section-label">Notes &amp; Terms</div>
+    <span class="notes-text" contenteditable="true">Payment is due within 30 days of invoice date. Late payments may incur a 1.5% monthly fee. Thank you for your business!</span>
+  </div>
+
+  <!-- Footer -->
+  <hr class="divider">
+  <div class="invoice-footer">
+    <span class="footer-text" contenteditable="true">Thank you for your business! Questions? yourcompany@email.com</span>
+  </div>
+
+</div><!-- /invoice -->
+</div><!-- /page-wrap -->
+
+<script>
+  let currency = '$';
+
+  /* ── Currency ── */
+  function updateCurrency() {
+    currency = document.getElementById('currencySelect').value;
+    recalc();
+  }
+
+  /* ── Dates ── */
+  function formatDate(d) {
+    return d.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+  }
+  (function initDates() {
+    const today = new Date();
+    const due = new Date(today); due.setDate(due.getDate() + 30);
+    document.getElementById('invoiceDate').textContent = formatDate(today);
+    document.getElementById('dueDate').textContent = formatDate(due);
+  })();
+
+  /* ── Row management ── */
+  let rowId = 0;
+
+  function addRow(desc = '', qty = 1, price = 0) {
+    const id = ++rowId;
+    const tbody = document.getElementById('itemsBody');
+    const tr = document.createElement('tr');
+    tr.id = 'row-' + id;
+    tr.innerHTML = `
+      <td class="td-editable col-desc" contenteditable="true" data-col="desc">${desc || 'Service / Product description'}</td>
+      <td class="td-editable" contenteditable="true" data-col="qty" data-id="${id}" oninput="recalc()">${qty}</td>
+      <td class="td-editable" contenteditable="true" data-col="price" data-id="${id}" oninput="recalc()">${price.toFixed ? price.toFixed(2) : price}</td>
+      <td class="amount" id="line-${id}">$0.00</td>
+      <td><div class="row-actions"><button class="row-delete" onclick="deleteRow(${id})" title="Remove row">✕</button></div></td>
+    `;
+    tbody.appendChild(tr);
+    recalc();
+    return tr;
+  }
+
+  function deleteRow(id) {
+    const tr = document.getElementById('row-' + id);
+    if (tr) tr.remove();
+    recalc();
+  }
+
+  function getNumeric(el) {
+    return parseFloat(el.textContent.replace(/[^0-9.\-]/g, '')) || 0;
+  }
+
+  function recalc() {
+    let subtotal = 0;
+    const rows = document.querySelectorAll('#itemsBody tr');
+    rows.forEach(tr => {
+      const qtyEl = tr.querySelector('[data-col="qty"]');
+      const priceEl = tr.querySelector('[data-col="price"]');
+      if (!qtyEl || !priceEl) return;
+      const id = qtyEl.dataset.id;
+      const qty = getNumeric(qtyEl);
+      const price = getNumeric(priceEl);
+      const line = qty * price;
+      subtotal += line;
+      const lineEl = document.getElementById('line-' + id);
+      if (lineEl) lineEl.textContent = currency + line.toFixed(2);
+    });
+    const taxRate = parseFloat(document.getElementById('taxRate').value) || 0;
+    const tax = subtotal * taxRate / 100;
+    const total = subtotal + tax;
+    document.getElementById('subtotalDisplay').textContent = currency + subtotal.toFixed(2);
+    document.getElementById('taxDisplay').textContent = currency + tax.toFixed(2);
+    document.getElementById('totalDisplay').textContent = currency + total.toFixed(2);
+  }
+
+  /* ── Clear / New invoice ── */
+  function clearInvoice() {
+    if (!confirm('Start a new invoice? All current data will be cleared.')) return;
+    document.querySelectorAll('[contenteditable]').forEach(el => {
+      const ph = el.dataset.placeholder;
+      el.textContent = ph || '';
+    });
+    document.getElementById('itemsBody').innerHTML = '';
+    rowId = 0;
+    document.getElementById('taxRate').value = 0;
+    const today = new Date();
+    const due = new Date(today); due.setDate(due.getDate() + 30);
+    document.getElementById('invoiceDate').textContent = formatDate(today);
+    document.getElementById('dueDate').textContent = formatDate(due);
+    addRow(); addRow(); addRow();
+    recalc();
+  }
+
+  /* ── Init with sample rows ── */
+  addRow('Web design & development', 1, 2500);
+  addRow('SEO optimization', 3, 350);
+  addRow('Monthly maintenance', 1, 150);
+  recalc();
+</script>
+</body>
+</html>
