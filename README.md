@@ -1,6 +1,6 @@
 # Invoice Generator
 
-A zero-dependency, browser-based invoice generator that runs entirely in a single HTML file — no server, no build step, no installation required.
+A zero-dependency, browser-based invoice generator that runs entirely in a single HTML file.
 
 ## Features
 
