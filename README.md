@@ -22,10 +22,6 @@ A zero-dependency, browser-based invoice generator that runs entirely in a singl
 
 No internet connection required after the file is downloaded.
 
-## Live demo
-
-[https://leo-bonacini.github.io/invoice_generator/invoice-generator.html](https://leo-bonacini.github.io/invoice_generator/invoice-generator.html)
-
 ## Customisation
 
 All styling lives inside the `<style>` block at the top of the file. The accent colour (`#4f8ef7`) and dark header (`#1a1a2e`) can be changed to match your brand in seconds.
