@@ -336,10 +336,18 @@
   }
   .currency-select:focus { border-color: #4f8ef7; }
 
+  /* ── Visitor counter ── */
+  .visitor-counter {
+    display: flex;
+    justify-content: center;
+    margin: 18px 0 0;
+  }
+  .visitor-counter img { height: 20px; }
+
   /* ── Print styles ── */
   @media print {
     body { background: #fff; }
-    .toolbar, .add-row-btn, .row-actions, .btn { display: none !important; }
+    .toolbar, .add-row-btn, .row-actions, .btn, .visitor-counter { display: none !important; }
     .page-wrap { margin: 0; padding: 0; max-width: 100%; }
     .invoice { box-shadow: none; border-radius: 0; padding: 32px 48px; }
     [contenteditable]:hover, [contenteditable]:focus {
@@ -497,6 +505,11 @@
   </div>
 
 </div><!-- /invoice -->
+
+<div class="visitor-counter">
+  <img src="https://api.visitorbadge.io/api/visitors?path=github.com%2Fleo-bonacini%2Finvoice_generator&label=Visitors&countColor=%234f8ef7&style=flat" alt="Visitor count">
+</div>
+
 </div><!-- /page-wrap -->
 
 <script>
