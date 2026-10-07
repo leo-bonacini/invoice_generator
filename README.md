@@ -4,13 +4,13 @@ A zero-dependency, browser-based invoice generator that runs entirely in a singl
 
 ## Features
 
-- **Fully editable** — click any field (company name, address, client details, line items, notes) to edit in place
-- **Live calculations** — subtotal, tax, and total update automatically as you type
-- **Multi-currency** — switch between USD, EUR, GBP, JPY, BRL, CHF, CAD, and AUD
-- **Line item management** — add or remove rows on the fly
-- **Bank / payment details** — dedicated section for transfer instructions
-- **Print to PDF** — clean print stylesheet hides all editing controls
-- **New invoice** — reset the form with one click
+- **Fully editable** - click any field (company name, address, client details, line items, notes) to edit in place
+- **Live calculations** - subtotal, tax, and total update automatically as you type
+- **Multi-currency** - switch between USD, EUR, GBP, JPY, BRL, CHF, CAD, and AUD
+- **Line item management** - add or remove rows on the fly
+- **Bank / payment details** - dedicated section for transfer instructions
+- **Print to PDF** - clean print stylesheet hides all editing controls
+- **New invoice** - reset the form with one click
 
 ## Usage
 
